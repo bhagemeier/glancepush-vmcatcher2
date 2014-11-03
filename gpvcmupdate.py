@@ -104,11 +104,7 @@ def main():
         sys.stdout.write("Creating Metadata Files")
         with open(metadata, "w") as outfile:
             # Sometimes, comments are not defined by the endorser
-            try:
-               os.environ['VMCATCHER_EVENT_SL_COMMENTS']
-            except KeyError:
-               os.environ['VMCATCHER_EVENT_SL_COMMENTS'] = "undefined"
-            outfile.write("comment=\"" + os.getenv('VMCATCHER_EVENT_SL_COMMENTS') + "\"\n")
+            outfile.write("comment=\"" + os.getenv('VMCATCHER_EVENT_SL_COMMENTS', 'undefined') + "\"\n")
             outfile.write("is_public=\"yes\"\n")
             if args.protected:
                 outfile.write("is_protected=\"yes\"\n")
@@ -122,13 +118,8 @@ def main():
             #write additional metadata
             i=0
             for metaname in image_metadata:
-                metavalue=os.getenv(image_metadata[metaname])
-                try:
-                   outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
-                except TypeError:
-                   # Sometimes, not all metadata is filled by the endorser
-                   metavalue = "undefined"
-                   outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
+                metavalue=os.getenv(image_metadata[metaname], 'undefined')
+                outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
                 i=i+1
             outfile.close()
         # TODO: Load custom test script
