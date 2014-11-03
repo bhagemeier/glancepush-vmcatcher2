@@ -40,7 +40,11 @@ setup(name=productname,
         'Operating System :: POSIX',
         'Programming Language :: Python',
         ],
-
+      requires=['python-novaclient',
+                'pbr',
+                'python-glanceclient',
+                'paramiko'
+          ],
     scripts=['gpvcmupdate.py'],
     data_files=[(data_files_installdir ,['README.md','ChangeLog','LICENSE'])]
     )
