@@ -39,7 +39,7 @@ def main():
                         dest="protected", default=False, help="Set protected flag in glance to true")
     parser.add_argument("-D", "--delete", action="store_true", dest="delete", default="false", help="Delete expired "
                                                                                                     "images")
-    parser.add_argument("--version", action="version", version="0.0.4")
+    parser.add_argument("--version", action="version", version="0.0.5")
     args = parser.parse_args()
 
     dir_cache = os.getenv('VMCATCHER_CACHE_DIR_CACHE', 0)
@@ -104,8 +104,20 @@ def main():
         sys.stdout.write("Creating Metadata Files")
         with open(metadata, "w") as outfile:
             # Sometimes, comments are not defined by the endorser
-            outfile.write("comment=\"" + os.getenv('VMCATCHER_EVENT_SL_COMMENTS', 'undefined') + "\"\n")
-            outfile.write("is_public=\"yes\"\n")
+            try:
+               os.environ['VMCATCHER_EVENT_SL_COMMENTS']
+            except KeyError:
+               os.environ['VMCATCHER_EVENT_SL_COMMENTS'] = "undefined"
+            outfile.write("comment=\"" + os.getenv('VMCATCHER_EVENT_SL_COMMENTS') + "\"\n")
+            # Try to get VMCATCHER_EVENT_VO. If exception is not raised, then VO is defined
+            # and image shouldn't be public. If is raised, then VO is not defined, and the
+            # image should be public
+            try:
+                os.environ['VMCATCHER_EVENT_VO']
+                outfile.write("is_public=\"no\"\n")
+            except KeyError:
+                outfile.write("is_public=\"yes\"\n")
+
             if args.protected:
                 outfile.write("is_protected=\"yes\"\n")
             else:
@@ -118,8 +130,13 @@ def main():
             #write additional metadata
             i=0
             for metaname in image_metadata:
-                metavalue=os.getenv(image_metadata[metaname], 'undefined')
-                outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
+                metavalue=os.getenv(image_metadata[metaname])
+                try:
+                   outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
+                except TypeError:
+                   # Sometimes, not all metadata is filled by the endorser
+                   metavalue = "undefined"
+                   outfile.write("properties["+str(i)+"]='"+metaname+"="+metavalue+"'\n");
                 i=i+1
             outfile.close()
         # TODO: Load custom test script
